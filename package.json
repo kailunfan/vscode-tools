@@ -1,0 +1,46 @@
+{
+  "name": "vscode-tools",
+  "displayName": "开发者工具集",
+  "description": "集成常用开发工具：时间戳解码等",
+  "version": "0.0.1",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:vscode-tools.decodeTimestamp"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-tools.decodeTimestamp",
+        "title": "解码时间戳为日期时间"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "vscode-tools.decodeTimestamp",
+          "group": "navigation@9",
+          "when": "editorTextFocus"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.3"
+  }
+}
