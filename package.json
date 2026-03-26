@@ -13,7 +13,8 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:vscode-tools.encodeToUnixSeconds",
-    "onCommand:vscode-tools.timestampToTimeString"
+    "onCommand:vscode-tools.timestampToTimeString",
+    "onCommand:vscode-tools.encodeToUnixMilliseconds"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -21,6 +22,10 @@
       {
         "command": "vscode-tools.encodeToUnixSeconds",
         "title": "转换为时间戳"
+      },
+      {
+        "command": "vscode-tools.encodeToUnixMilliseconds",
+        "title": "转换为时间戳(ms)"
       },
       {
         "command": "vscode-tools.timestampToTimeString",
@@ -37,6 +42,11 @@
         {
           "command": "vscode-tools.encodeToUnixSeconds",
           "group": "navigation@8",
+          "when": "editorTextFocus && editorHasSelection"
+        },
+        {
+          "command": "vscode-tools.encodeToUnixMilliseconds",
+          "group": "navigation@9",
           "when": "editorTextFocus && editorHasSelection"
         }
       ]

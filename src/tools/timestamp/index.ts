@@ -1,8 +1,14 @@
 import * as vscode from "vscode";
-import { formatLocalDateTime, parseTimeStringToUnixSeconds, parseTimestamp } from "./model";
+import {
+  formatLocalDateTime,
+  parseTimeStringToUnixMilliseconds,
+  parseTimeStringToUnixSeconds,
+  parseTimestamp,
+} from "./model";
 
 /** 与 package.json contributes.commands 保持一致 */
 export const TIMESTAMP_ENCODE_COMMAND = "vscode-tools.encodeToUnixSeconds";
+export const TIMESTAMP_ENCODE_MS_COMMAND = "vscode-tools.encodeToUnixMilliseconds";
 export const TIMESTAMP_TO_TIME_STRING_COMMAND = "vscode-tools.timestampToTimeString";
 
 /** 从光标位置向左右扩展，得到一行内可尝试解析为时间戳的连续片段；遇空格停止、不跨越空格。 */
@@ -132,5 +138,31 @@ export function registerTimestampTool(context: vscode.ExtensionContext): void {
     }
   });
 
-  context.subscriptions.push(hoverDisposable, toStringDisposable, encodeDisposable);
+  const encodeMsDisposable = vscode.commands.registerCommand(TIMESTAMP_ENCODE_MS_COMMAND, async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage("没有活动的编辑器。");
+      return;
+    }
+    const sel = editor.selection;
+    if (sel.isEmpty) {
+      vscode.window.showWarningMessage("请先选中要转换的时间文本。");
+      return;
+    }
+    const raw = editor.document.getText(sel);
+    const ms = parseTimeStringToUnixMilliseconds(raw);
+    if (ms === null) {
+      vscode.window.showErrorMessage(
+        `无法解析为时间：「${raw.trim().slice(0, 80)}${raw.trim().length > 80 ? "…" : ""}」`
+      );
+      return;
+    }
+    const out = String(ms);
+    const ok = await editor.edit((eb) => eb.replace(sel, out));
+    if (!ok) {
+      vscode.window.showErrorMessage("无法替换选区。");
+    }
+  });
+
+  context.subscriptions.push(hoverDisposable, toStringDisposable, encodeDisposable, encodeMsDisposable);
 }

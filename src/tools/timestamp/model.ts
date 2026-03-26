@@ -80,11 +80,11 @@ function normalizeFractionalMs(frac: string): number {
 }
 
 /**
- * 将常见时间字符串解析为 **Unix 秒**（向下取整）。
+ * 将常见时间字符串解析为 **Unix 毫秒**。
  * 优先：`YYYY-MM-DD HH:mm:ss` / `YYYY-MM-DDTHH:mm:ss`（本地）；`YYYY-MM-DD`（本地零点）。
  * 其它：`Date.parse` 可识别的字符串（如带 `Z` 的 ISO）。
  */
-export function parseTimeStringToUnixSeconds(raw: string): number | null {
+export function parseTimeStringToUnixMilliseconds(raw: string): number | null {
   const s = raw.trim();
   if (!s) {
     return null;
@@ -98,8 +98,8 @@ export function parseTimeStringToUnixSeconds(raw: string): number | null {
     const h = Number(m[4]);
     const mi = Number(m[5]);
     const sec = Number(m[6]);
-    const ms = m[7] !== undefined ? normalizeFractionalMs(m[7]) : 0;
-    const date = new Date(y, mo - 1, d, h, mi, sec, ms);
+    const msPart = m[7] !== undefined ? normalizeFractionalMs(m[7]) : 0;
+    const date = new Date(y, mo - 1, d, h, mi, sec, msPart);
     if (
       date.getFullYear() !== y ||
       date.getMonth() !== mo - 1 ||
@@ -107,11 +107,11 @@ export function parseTimeStringToUnixSeconds(raw: string): number | null {
       date.getHours() !== h ||
       date.getMinutes() !== mi ||
       date.getSeconds() !== sec ||
-      date.getMilliseconds() !== ms
+      date.getMilliseconds() !== msPart
     ) {
       return null;
     }
-    return Math.floor(date.getTime() / 1000);
+    return date.getTime();
   }
 
   m = LOCAL_DATE_ONLY.exec(s);
@@ -123,12 +123,21 @@ export function parseTimeStringToUnixSeconds(raw: string): number | null {
     if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) {
       return null;
     }
-    return Math.floor(date.getTime() / 1000);
+    return date.getTime();
   }
 
   const t = Date.parse(s);
   if (Number.isNaN(t)) {
     return null;
   }
-  return Math.floor(t / 1000);
+  return t;
+}
+
+/** Unix 秒（向下取整），规则同 {@link parseTimeStringToUnixMilliseconds}。 */
+export function parseTimeStringToUnixSeconds(raw: string): number | null {
+  const ms = parseTimeStringToUnixMilliseconds(raw);
+  if (ms === null) {
+    return null;
+  }
+  return Math.floor(ms / 1000);
 }

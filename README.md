@@ -14,6 +14,7 @@ A VS Code / Cursor extension that bundles small developer utilities. Currently i
 - **Commands** (context menu when text is selected, and Command Palette):  
   - **Convert to time string** (`vscode-tools.timestampToTimeString`): replaces the selection with local `YYYY-MM-DD HH:mm:ss`.  
   - **Convert to timestamp** (`vscode-tools.encodeToUnixSeconds`): replaces the selection with **Unix seconds**.
+  - **Convert to timestamp (ms)** (`vscode-tools.encodeToUnixMilliseconds`): replaces the selection with **Unix milliseconds**.
 
 **Parsing rules (summary)**
 
