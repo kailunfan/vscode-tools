@@ -65,3 +65,70 @@ export function formatLocalDateTime(ms: number): string {
   }
   return formatYmdHmsLocal(d);
 }
+
+/** `YYYY-MM-DD HH:mm:ss` 或 `T` 分隔；可选 `.fff` 毫秒；按本地时区解释。 */
+const LOCAL_DATE_TIME =
+  /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?$/;
+
+/** 仅日期，按本地当天 00:00:00。 */
+const LOCAL_DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+function normalizeFractionalMs(frac: string): number {
+  const padded = (frac + "000").slice(0, 3);
+  const n = Number(padded);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * 将常见时间字符串解析为 **Unix 秒**（向下取整）。
+ * 优先：`YYYY-MM-DD HH:mm:ss` / `YYYY-MM-DDTHH:mm:ss`（本地）；`YYYY-MM-DD`（本地零点）。
+ * 其它：`Date.parse` 可识别的字符串（如带 `Z` 的 ISO）。
+ */
+export function parseTimeStringToUnixSeconds(raw: string): number | null {
+  const s = raw.trim();
+  if (!s) {
+    return null;
+  }
+
+  let m = LOCAL_DATE_TIME.exec(s);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    const h = Number(m[4]);
+    const mi = Number(m[5]);
+    const sec = Number(m[6]);
+    const ms = m[7] !== undefined ? normalizeFractionalMs(m[7]) : 0;
+    const date = new Date(y, mo - 1, d, h, mi, sec, ms);
+    if (
+      date.getFullYear() !== y ||
+      date.getMonth() !== mo - 1 ||
+      date.getDate() !== d ||
+      date.getHours() !== h ||
+      date.getMinutes() !== mi ||
+      date.getSeconds() !== sec ||
+      date.getMilliseconds() !== ms
+    ) {
+      return null;
+    }
+    return Math.floor(date.getTime() / 1000);
+  }
+
+  m = LOCAL_DATE_ONLY.exec(s);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    const date = new Date(y, mo - 1, d, 0, 0, 0, 0);
+    if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) {
+      return null;
+    }
+    return Math.floor(date.getTime() / 1000);
+  }
+
+  const t = Date.parse(s);
+  if (Number.isNaN(t)) {
+    return null;
+  }
+  return Math.floor(t / 1000);
+}

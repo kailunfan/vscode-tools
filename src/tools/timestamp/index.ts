@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
-import { formatLocalDateTime, parseTimestamp } from "./model";
+import { formatLocalDateTime, parseTimeStringToUnixSeconds, parseTimestamp } from "./model";
 
 /** 与 package.json contributes.commands 保持一致 */
-export const TIMESTAMP_DECODE_COMMAND = "vscode-tools.decodeTimestamp";
+export const TIMESTAMP_ENCODE_COMMAND = "vscode-tools.encodeToUnixSeconds";
+export const TIMESTAMP_TO_TIME_STRING_COMMAND = "vscode-tools.timestampToTimeString";
 
 /** 从光标位置向左右扩展，得到一行内可尝试解析为时间戳的连续片段；遇空格停止、不跨越空格。 */
 function getTimestampRangeAtPosition(
@@ -45,18 +46,6 @@ function getTimestampRangeAtPosition(
   return new vscode.Range(position.line, start, position.line, end);
 }
 
-function resolveTimestampRange(
-  document: vscode.TextDocument,
-  editor: vscode.TextEditor
-): vscode.Range | undefined {
-  const sel = editor.selection;
-  if (!sel.isEmpty) {
-    const raw = document.getText(sel);
-    return parseTimestamp(raw) === null ? undefined : sel;
-  }
-  return getTimestampRangeAtPosition(document, sel.active);
-}
-
 function buildTimestampHoverMarkdown(local: string): vscode.MarkdownString {
   const md = new vscode.MarkdownString();
   md.appendCodeblock(local, "plaintext");
@@ -84,32 +73,64 @@ export function registerTimestampTool(context: vscode.ExtensionContext): void {
     },
   });
 
-  const commandDisposable = vscode.commands.registerCommand(TIMESTAMP_DECODE_COMMAND, () => {
+  const toStringDisposable = vscode.commands.registerCommand(
+    TIMESTAMP_TO_TIME_STRING_COMMAND,
+    async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showWarningMessage("没有活动的编辑器。");
+        return;
+      }
+      const sel = editor.selection;
+      if (sel.isEmpty) {
+        vscode.window.showWarningMessage("请先选中要转换的时间戳文本。");
+        return;
+      }
+      const raw = editor.document.getText(sel);
+      const ms = parseTimestamp(raw);
+      if (ms === null) {
+        vscode.window.showErrorMessage(
+          `无法解析为秒级或毫秒级时间戳：「${raw.trim().slice(0, 80)}${raw.trim().length > 80 ? "…" : ""}」`
+        );
+        return;
+      }
+      const out = formatLocalDateTime(ms);
+      if (out === "(无效)") {
+        vscode.window.showErrorMessage("时间戳对应无效日期。");
+        return;
+      }
+      const ok = await editor.edit((eb) => eb.replace(sel, out));
+      if (!ok) {
+        vscode.window.showErrorMessage("无法替换选区。");
+      }
+    }
+  );
+
+  const encodeDisposable = vscode.commands.registerCommand(TIMESTAMP_ENCODE_COMMAND, async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       vscode.window.showWarningMessage("没有活动的编辑器。");
       return;
     }
-    const range = resolveTimestampRange(editor.document, editor);
-    if (!range) {
-      vscode.window.showWarningMessage("光标处或选区内未识别到秒级/毫秒级时间戳。");
+    const sel = editor.selection;
+    if (sel.isEmpty) {
+      vscode.window.showWarningMessage("请先选中要转换的时间文本。");
       return;
     }
-    const text = editor.document.getText(range);
-    const ms = parseTimestamp(text);
-    if (ms === null) {
+    const raw = editor.document.getText(sel);
+    const sec = parseTimeStringToUnixSeconds(raw);
+    if (sec === null) {
       vscode.window.showErrorMessage(
-        `无法解析为秒级或毫秒级时间戳：「${text.trim().slice(0, 80)}${text.trim().length > 80 ? "…" : ""}」`
+        `无法解析为时间：「${raw.trim().slice(0, 80)}${raw.trim().length > 80 ? "…" : ""}」`
       );
       return;
     }
-    const local = formatLocalDateTime(ms);
-    vscode.window.showInformationMessage(local, "复制").then((choice: string | undefined) => {
-      if (choice === "复制") {
-        vscode.env.clipboard.writeText(local);
-      }
-    });
+    const out = String(sec);
+    const ok = await editor.edit((eb) => eb.replace(sel, out));
+    if (!ok) {
+      vscode.window.showErrorMessage("无法替换选区。");
+    }
   });
 
-  context.subscriptions.push(hoverDisposable, commandDisposable);
+  context.subscriptions.push(hoverDisposable, toStringDisposable, encodeDisposable);
 }

@@ -1,7 +1,7 @@
 {
   "name": "vscode-tools",
   "displayName": "开发者工具集",
-  "description": "集成常用开发工具：时间戳解码等",
+  "description": "集成常用开发工具：时间戳互转等",
   "version": "0.0.1",
   "publisher": "local",
   "engines": {
@@ -12,22 +12,32 @@
   ],
   "activationEvents": [
     "onStartupFinished",
-    "onCommand:vscode-tools.decodeTimestamp"
+    "onCommand:vscode-tools.encodeToUnixSeconds",
+    "onCommand:vscode-tools.timestampToTimeString"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "vscode-tools.decodeTimestamp",
-        "title": "解码时间戳为日期时间"
+        "command": "vscode-tools.encodeToUnixSeconds",
+        "title": "转换为时间戳"
+      },
+      {
+        "command": "vscode-tools.timestampToTimeString",
+        "title": "转换为时间字符串"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "vscode-tools.decodeTimestamp",
-          "group": "navigation@9",
-          "when": "editorTextFocus"
+          "command": "vscode-tools.timestampToTimeString",
+          "group": "navigation@7",
+          "when": "editorTextFocus && editorHasSelection"
+        },
+        {
+          "command": "vscode-tools.encodeToUnixSeconds",
+          "group": "navigation@8",
+          "when": "editorTextFocus && editorHasSelection"
         }
       ]
     }

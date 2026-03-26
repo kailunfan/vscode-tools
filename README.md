@@ -1,6 +1,6 @@
 # Developer Toolkit (vscode-tools)
 
-A VS Code / Cursor extension that bundles small developer utilities. Currently includes **Unix timestamp decoding** (hover and command).
+A VS Code / Cursor extension that bundles small developer utilities. Currently includes **Unix timestamp** helpers: editor **hover**, **convert selection to local time string**, and **convert selection to Unix seconds**.
 
 ## Requirements
 
@@ -10,11 +10,10 @@ A VS Code / Cursor extension that bundles small developer utilities. Currently i
 
 ### Timestamps
 
-- **Hover**: Move the pointer over a second- or millisecond-level Unix timestamp in the editor to see a hover with **local** time as `YYYY-MM-DD HH:mm:ss`.
-- **Context menu / command**: Decode timestamp to date/time (command ID `vscode-tools.decodeTimestamp`; the palette title in this repo follows `package.json`, e.g. Chinese **解码时间戳为日期时间**).
-  - **No selection**: Expands a token from the **caret** on the same line.
-  - **With selection**: Parses the **entire selected** text.
-  - In the notification, **Copy** puts that local time string on the clipboard.
+- **Hover**: Move the pointer over a second- or millisecond-level Unix timestamp in the editor to see a hover with **local** time as `YYYY-MM-DD HH:mm:ss` (token expansion on the current line; stops at spaces).
+- **Commands** (context menu when text is selected, and Command Palette):  
+  - **Convert to time string** (`vscode-tools.timestampToTimeString`): replaces the selection with local `YYYY-MM-DD HH:mm:ss`.  
+  - **Convert to timestamp** (`vscode-tools.encodeToUnixSeconds`): replaces the selection with **Unix seconds**.
 
 **Parsing rules (summary)**
 
