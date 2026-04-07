@@ -11,6 +11,14 @@ export const TIMESTAMP_ENCODE_COMMAND = "vscode-tools.encodeToUnixSeconds";
 export const TIMESTAMP_ENCODE_MS_COMMAND = "vscode-tools.encodeToUnixMilliseconds";
 export const TIMESTAMP_TO_TIME_STRING_COMMAND = "vscode-tools.timestampToTimeString";
 
+/** 含 `http` / 路径匹配：少数环境下仅 `"*"` 未覆盖 REST Client 等注册的 `http` 语言。 */
+const TIMESTAMP_HOVER_SELECTOR: vscode.DocumentSelector = [
+  "*",
+  "http",
+  { pattern: "**/*.http" },
+  { pattern: "**/*.rest" },
+];
+
 /** 从光标位置向左右扩展，得到一行内可尝试解析为时间戳的连续片段；遇空格停止、不跨越空格。 */
 function getTimestampRangeAtPosition(
   document: vscode.TextDocument,
@@ -59,7 +67,7 @@ function buildTimestampHoverMarkdown(local: string): vscode.MarkdownString {
 }
 
 export function registerTimestampTool(context: vscode.ExtensionContext): void {
-  const hoverDisposable = vscode.languages.registerHoverProvider("*", {
+  const hoverDisposable = vscode.languages.registerHoverProvider(TIMESTAMP_HOVER_SELECTOR, {
     provideHover(
       document: vscode.TextDocument,
       position: vscode.Position,
